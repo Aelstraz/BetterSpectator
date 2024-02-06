@@ -1,4 +1,4 @@
-# BetterSpectator
+# BetterSpectator (Lethal Company Mod)
 Mod for Lethal Company. Adds additional features when spectating.
 
 ## Current features:
