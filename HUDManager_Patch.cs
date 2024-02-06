@@ -53,6 +53,7 @@ internal class HUDManager_Patch
                         fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
                         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
                     }
+                    textObjs[1].alignment = TextAlignmentOptions.Left;
                     textObjs[1].text = "\nDead: " + Enum.GetName(typeof(CauseOfDeath), currentPlayer.causeOfDeath);
                 }
             }
