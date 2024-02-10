@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 [HarmonyPatch(typeof(HUDManager))]
@@ -22,7 +23,7 @@ internal class HUDManager_Patch
         if (GameNetworkManager.Instance != null && GameNetworkManager.Instance.localPlayerController != null && GameNetworkManager.Instance.localPlayerController.isPlayerDead && HUDManager.Instance.hasLoadedSpectateUI)
         {
             localPlayer = GameNetworkManager.Instance.localPlayerController;
-            //UpdateInput();
+            UpdateInput();
             UpdateUI();
         }
         //disable canvas if not spectating
@@ -66,12 +67,12 @@ internal class HUDManager_Patch
         float scrollWheelInput = IngamePlayerSettings.Instance.playerInput.actions.FindAction("SwitchItem").ReadValue<float>();
 
         //go forward in the spectator list
-        if (scrollWheelInput > 0f)
+        if (Keyboard.current[Key.RightArrow].wasPressedThisFrame || scrollWheelInput > 0f)
         {
             SpectateNextPlayer(true);
         }
         //go back in the spectator list
-        else if (scrollWheelInput < 0f)
+        else if (Keyboard.current[Key.LeftArrow].wasPressedThisFrame || scrollWheelInput < 0f)
         {
             SpectateNextPlayer(false);
         }
@@ -79,7 +80,48 @@ internal class HUDManager_Patch
 
     private static void SpectateNextPlayer(bool forward)
     {
-
+        //copy & pasted devs code, added ability to go backwards through the specate list
+        int num = 0;
+        if (localPlayer.spectatedPlayerScript != null)
+        {
+            num = (int)localPlayer.spectatedPlayerScript.playerClientId;
+        }
+        if (forward)
+        {
+            for (int i = 0; i < localPlayer.playersManager.allPlayerScripts.Length; i++)
+            {
+                num = (num + 1) % localPlayer.playersManager.allPlayerScripts.Length;
+                if (!localPlayer.playersManager.allPlayerScripts[num].isPlayerDead && localPlayer.playersManager.allPlayerScripts[num].isPlayerControlled && localPlayer.playersManager.allPlayerScripts[num] != localPlayer)
+                {
+                    localPlayer.spectatedPlayerScript = localPlayer.playersManager.allPlayerScripts[num];
+                    localPlayer.SetSpectatedPlayerEffects();
+                    return;
+                }
+            }
+        }
+        else
+        {
+            for (int i = localPlayer.playersManager.allPlayerScripts.Length - 1; i >= 0; i--)
+            {
+                if(num == 0)
+                {
+                    num = (int)localPlayer.playersManager.allPlayerScripts[localPlayer.playersManager.allPlayerScripts.Length - 1].playerClientId;
+                }
+                num = (num - 1) % localPlayer.playersManager.allPlayerScripts.Length;
+                if (!localPlayer.playersManager.allPlayerScripts[num].isPlayerDead && localPlayer.playersManager.allPlayerScripts[num].isPlayerControlled && localPlayer.playersManager.allPlayerScripts[num] != localPlayer)
+                {
+                    localPlayer.spectatedPlayerScript = localPlayer.playersManager.allPlayerScripts[num];
+                    localPlayer.SetSpectatedPlayerEffects();
+                    return;
+                }
+            }
+        }
+        if (localPlayer.deadBody != null && localPlayer.deadBody.gameObject.activeSelf)
+        {
+            localPlayer.spectateCameraPivot.position = localPlayer.deadBody.bodyParts[0].position;
+            localPlayer.RaycastSpectateCameraAroundPivot();
+        }
+        StartOfRound.Instance.SetPlayerSafeInShip();
     }
 
     private static void UpdateUI()
@@ -91,39 +133,6 @@ internal class HUDManager_Patch
         }
         canvasObj.SetActive(true);
         spectatorInfoText.text = HUDManager.Instance.clockNumber.text;
-    }
-
-    private static int GetNextAlivePlayer(ref int index, int startIndex, bool forward)
-    {
-        if (!localPlayer.playersManager.allPlayerScripts[index].isPlayerDead && localPlayer.playersManager.allPlayerScripts[index].isPlayerControlled && localPlayer.playersManager.allPlayerScripts[index] != localPlayer)
-        {
-            return index;
-        }
-        else if(forward)
-        {
-            index++;
-            if(index >= localPlayer.playersManager.allPlayerScripts.Length)
-            {
-                index = 0;
-            }
-        }
-        else
-        {
-            index--;
-            if (index < 0)
-            {
-                index = localPlayer.playersManager.allPlayerScripts.Length - 1;
-            }
-        }
-
-        if (index == startIndex)
-        {
-            return -1;
-        }
-        else
-        {
-            return GetNextAlivePlayer(ref index, startIndex, forward);
-        }
     }
 
     private static void SetupUI()
