@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 
@@ -13,11 +14,12 @@ namespace BetterSpectator
         private void Awake()
         {
             logger = Logger;
-            logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            Settings.Load(Config);
             harmony.PatchAll(typeof(HUDManager_Patch));
+            Log($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
-        public static void LogInfo(string info)
+        public static void Log(string info)
         {
             logger.LogInfo(info);
         }
