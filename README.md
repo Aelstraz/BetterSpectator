@@ -1,6 +1,8 @@
 # BetterSpectator (Lethal Company Mod)
 Mod for Lethal Company. Adds additional features when spectating.
 
+### Available at Thunderstore: [Thunderstore](https://thunderstore.io/c/lethal-company/p/Aelstraz/BetterSpectator/)
+
 ## Current features:
 - Time of day shown
 - Each dead players cause of death shown
